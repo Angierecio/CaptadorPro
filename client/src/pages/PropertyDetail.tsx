@@ -7,8 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Building2, MapPin, Euro, Ruler, BedDouble, Bath, ArrowLeft,
   Phone, Mail, User, Calendar, Globe, CheckCircle, XCircle,
-  Car, Trees, Waves, Wind, Zap, Home,
+  Car, Trees, Waves, Wind, Zap, Home, FileDown, Loader2,
 } from "lucide-react";
+import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
@@ -36,6 +37,33 @@ export default function PropertyDetail() {
   const params = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
   const id = parseInt(params.id ?? "0");
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  const handleDownloadPdf = async () => {
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch(`/api/properties/${id}/pdf`, { credentials: "include" });
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: "Error al generar el PDF" }));
+        toast.error(err.error || "Error al generar el PDF");
+        return;
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ficha-propiedad-${id}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("Ficha PDF descargada correctamente");
+    } catch {
+      toast.error("Error al descargar la ficha PDF");
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const { data: property, isLoading, refetch } = trpc.properties.byId.useQuery({ id }, { enabled: !!id });
 
@@ -75,7 +103,7 @@ export default function PropertyDetail() {
     <div className="space-y-6 max-w-5xl">
       {/* Back + Header */}
       <div className="flex items-start gap-4">
-        <Button variant="ghost" size="sm" onClick={() => setLocation("/properties")} className="mt-1 gap-1 text-muted-foreground">
+        <Button variant="ghost" size="sm" onClick={() => setLocation("/properties")} className="mt-1 gap-1 text-muted-foreground shrink-0">
           <ArrowLeft className="h-4 w-4" />
           Volver
         </Button>
@@ -95,6 +123,20 @@ export default function PropertyDetail() {
               <span>{[property.address, property.district, property.city, property.province].filter(Boolean).join(", ")}</span>
             </div>
           )}
+        </div>
+        <div className="shrink-0 mt-1">
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
+            className="gap-2 text-white"
+            style={{ background: "oklch(0.22 0.10 240)" }}
+          >
+            {downloadingPdf
+              ? <Loader2 className="h-4 w-4 animate-spin" />
+              : <FileDown className="h-4 w-4" />
+            }
+            {downloadingPdf ? "Generando..." : "Descargar Ficha PDF"}
+          </Button>
         </div>
       </div>
 

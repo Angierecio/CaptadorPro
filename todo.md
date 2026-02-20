@@ -48,3 +48,10 @@
 - [x] Tests Vitest para routers principales (12 tests pasados)
 - [x] Checkpoint final
 - [x] Entrega al usuario
+
+## Generación de Fichas PDF
+- [x] Endpoint backend /api/properties/:id/pdf con puppeteer-core y chromium
+- [x] Diseño elegante de la ficha PDF (azul marino, dorado, logo, datos completos)
+- [x] Sección de contacto del propietario y agente responsable en el PDF
+- [x] Galería de imágenes y equipamiento en el PDF
+- [x] Botón "Descargar Ficha PDF" en la página de detalle de propiedad
