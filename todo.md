@@ -58,3 +58,15 @@
 
 ## Notificaciones
 - [x] Notificación automática al admin cuando un nuevo usuario se registra
+
+## Landing Page de Ventas
+- [x] Hero section con headline potente, subheadline y CTA de registro
+- [x] Sección de métricas/estadísticas de impacto
+- [x] Sección de características principales con iconos
+- [x] Sección de cómo funciona (paso a paso)
+- [x] Sección de beneficios por rol (agente independiente / agencia)
+- [x] Sección de precios / prueba gratuita
+- [x] Sección de testimonios
+- [x] Footer con links y contacto
+- [x] Navbar pública con botón de login/acceso
+- [x] Enrutamiento: visitantes no autenticados ven landing, autenticados van al dashboard

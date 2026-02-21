@@ -68,51 +68,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading) return <DashboardLayoutSkeleton />;
 
   if (!user) {
-    return (
-      <div
-        className="flex items-center justify-center min-h-screen"
-        style={{ background: "linear-gradient(160deg, oklch(0.22 0.10 240) 0%, oklch(0.29 0.13 240) 50%, oklch(0.38 0.14 240) 100%)" }}
-      >
-        <div className="flex flex-col items-center gap-8 p-10 max-w-md w-full mx-4 bg-white/95 backdrop-blur rounded-2xl shadow-2xl">
-          {/* Logo */}
-          <div className="flex flex-col items-center gap-3">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: "oklch(0.22 0.10 240)" }}>
-              <Home className="w-8 h-8 text-white" />
-            </div>
-            <div className="text-center">
-              <h1 className="text-2xl font-serif font-semibold" style={{ color: "oklch(0.22 0.10 240)" }}>
-                PropTech Captación
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Sistema de Captación Inmobiliaria
-              </p>
-            </div>
-          </div>
-
-          <div className="w-full h-px bg-border" />
-
-          <div className="text-center space-y-2">
-            <h2 className="text-lg font-semibold text-foreground">Accede a tu plataforma</h2>
-            <p className="text-sm text-muted-foreground">
-              Inicia sesión para gestionar tus propiedades, leads y captaciones.
-            </p>
-          </div>
-
-          <Button
-            onClick={() => { window.location.href = getLoginUrl(); }}
-            size="lg"
-            className="w-full h-12 text-base font-medium shadow-lg hover:shadow-xl transition-all"
-            style={{ background: "oklch(0.22 0.10 240)" }}
-          >
-            Iniciar sesión
-          </Button>
-
-          <p className="text-xs text-muted-foreground text-center">
-            Plataforma exclusiva para agentes inmobiliarios certificados
-          </p>
-        </div>
-      </div>
-    );
+    // Redirigir a la landing page en lugar de mostrar pantalla de login
+    window.location.href = "/";
+    return <DashboardLayoutSkeleton />;
   }
 
   return (
