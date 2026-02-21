@@ -55,3 +55,6 @@
 - [x] Sección de contacto del propietario y agente responsable en el PDF
 - [x] Galería de imágenes y equipamiento en el PDF
 - [x] Botón "Descargar Ficha PDF" en la página de detalle de propiedad
+
+## Notificaciones
+- [x] Notificación automática al admin cuando un nuevo usuario se registra

@@ -2,6 +2,7 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
+import { notifyOwner } from "./notification";
 import { sdk } from "./sdk";
 
 function getQueryParam(req: Request, key: string): string | undefined {
@@ -28,6 +29,10 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // Detectar si el usuario es nuevo antes del upsert
+      const existingUser = await db.getUserByOpenId(userInfo.openId);
+      const isNewUser = !existingUser;
+
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
@@ -35,6 +40,18 @@ export function registerOAuthRoutes(app: Express) {
         loginMethod: userInfo.loginMethod ?? userInfo.platform ?? null,
         lastSignedIn: new Date(),
       });
+
+      // Notificar al admin si es un usuario nuevo
+      if (isNewUser) {
+        const userName = userInfo.name || "Sin nombre";
+        const userEmail = userInfo.email || "Sin email";
+        const loginMethod = userInfo.loginMethod ?? userInfo.platform ?? "desconocido";
+        const now = new Date().toLocaleString("es-ES", { timeZone: "Europe/Madrid" });
+        notifyOwner({
+          title: `🏠 Nuevo cliente registrado en CaptadorPro`,
+          content: `Un nuevo agente se ha registrado en CaptadorPro.\n\n👤 Nombre: ${userName}\n📧 Email: ${userEmail}\n🔑 Método de acceso: ${loginMethod}\n🕐 Fecha y hora: ${now}\n\nPuedes verlo en el módulo de Agentes de tu plataforma.`,
+        }).catch(() => {/* silenciar errores de notificación */});
+      }
 
       const sessionToken = await sdk.createSessionToken(userInfo.openId, {
         name: userInfo.name || "",
