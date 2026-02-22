@@ -89,7 +89,7 @@ export default function Landing() {
             con inteligencia artificial
           </h1>
           <p className="text-lg sm:text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-            CaptadorPro automatiza la búsqueda de propiedades en Idealista, Fotocasa y otros portales. Gestiona tus leads, genera fichas PDF y cierra más acuerdos sin esfuerzo manual.
+            CaptadorPro automatiza la búsqueda de propiedades en ZonaProp, Argenprop, MercadoLibre y otros portales. Gestiona tus leads, genera fichas PDF y cierra más acuerdos sin esfuerzo manual.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-14">
             <Button
@@ -143,7 +143,7 @@ export default function Landing() {
                 step: "01",
                 icon: Search,
                 title: "Configura tus fuentes",
-                desc: "Añade las URLs de búsqueda de Idealista, Fotocasa u otros portales con los filtros de tu zona, precio y tipo de inmueble.",
+                desc: "Añade las URLs de búsqueda de ZonaProp, Argenprop u otros portales con los filtros de tu zona, precio y tipo de inmueble.",
               },
               {
                 step: "02",
@@ -189,7 +189,7 @@ export default function Landing() {
               {
                 icon: Zap,
                 title: "Scraping automático con IA",
-                desc: "Extrae propiedades de Idealista, Fotocasa y otros portales de forma automática, con todos los datos estructurados.",
+                desc: "Extrae propiedades de ZonaProp, Argenprop, MercadoLibre y otros portales de forma automática, con todos los datos estructurados.",
                 color: NAVY,
                 bg: "oklch(0.22 0.10 240 / 0.08)",
               },
@@ -251,7 +251,7 @@ export default function Landing() {
                 <span style={{ color: NAVY }}>Deja que CaptadorPro lo haga por ti.</span>
               </h2>
               <p className="text-gray-500 text-lg mb-8 leading-relaxed">
-                El agente inmobiliario promedio pierde 3 horas al día buscando propiedades en portales. Con CaptadorPro, ese tiempo lo dedicas a lo que realmente importa: hablar con propietarios y cerrar acuerdos.
+                El agente inmobiliario promedio pierde 3 horas al día buscando propiedades en ZonaProp, Argenprop y otros portales. Con CaptadorPro, ese tiempo lo dedicas a lo que realmente importa: hablar con propietarios y cerrar acuerdos.
               </p>
               <div className="space-y-4">
                 {[
@@ -308,19 +308,19 @@ export default function Landing() {
             {[
               {
                 name: "Carlos Martínez",
-                role: "Agente independiente, Madrid",
-                text: "Antes tardaba 2 horas al día buscando en Idealista. Ahora CaptadorPro me trae las propiedades solas y yo me dedico a llamar a los propietarios. Tripling mis captaciones en el primer mes.",
+                role: "Agente independiente, Buenos Aires",
+                text: "Antes tardaba 2 horas al día buscando en ZonaProp y Argenprop. Ahora CaptadorPro me trae las propiedades solas y yo me dedico a llamar a los propietarios. Triplicé mis captaciones en el primer mes.",
                 stars: 5,
               },
               {
                 name: "Laura Sánchez",
-                role: "Directora de agencia, Barcelona",
+                role: "Directora de agencia, Córdoba",
                 text: "Lo que más me gusta es el CRM integrado. Antes usaba Excel para llevar el seguimiento. Ahora todo está en un solo lugar y mi equipo de 5 agentes trabaja de forma coordinada.",
                 stars: 5,
               },
               {
                 name: "Miguel Torres",
-                role: "Agente inmobiliario, Valencia",
+                role: "Agente inmobiliario, Rosario",
                 text: "Las fichas PDF son un antes y un después. Las envío a los clientes por WhatsApp y la impresión que causan es brutal. Parece que tengo un equipo de diseño detrás.",
                 stars: 5,
               },

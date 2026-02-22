@@ -17,12 +17,12 @@ import {
 import { toast } from "sonner";
 
 const PORTAL_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  idealista: { label: "Idealista", color: "text-emerald-700", bg: "bg-emerald-50" },
-  fotocasa: { label: "Fotocasa", color: "text-orange-700", bg: "bg-orange-50" },
-  habitaclia: { label: "Habitaclia", color: "text-blue-700", bg: "bg-blue-50" },
-  pisos_com: { label: "Pisos.com", color: "text-purple-700", bg: "bg-purple-50" },
-  milanuncios: { label: "Milanuncios", color: "text-red-700", bg: "bg-red-50" },
-  yaencontre: { label: "Yaencontre", color: "text-teal-700", bg: "bg-teal-50" },
+  zonaprop: { label: "ZonaProp", color: "text-emerald-700", bg: "bg-emerald-50" },
+  argenprop: { label: "Argenprop", color: "text-blue-700", bg: "bg-blue-50" },
+  mercadolibre: { label: "MercadoLibre Inmuebles", color: "text-yellow-700", bg: "bg-yellow-50" },
+  properati: { label: "Properati", color: "text-orange-700", bg: "bg-orange-50" },
+  remax: { label: "RE/MAX Argentina", color: "text-red-700", bg: "bg-red-50" },
+  navent: { label: "Navent", color: "text-purple-700", bg: "bg-purple-50" },
   otro: { label: "Otro", color: "text-gray-700", bg: "bg-gray-50" },
 };
 
@@ -30,7 +30,7 @@ function AddSourceDialog({ onSuccess }: { onSuccess: () => void }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    portal: "idealista" as const,
+    portal: "zonaprop" as const,
     baseUrl: "",
     scheduleInterval: 60,
     isActive: true,
@@ -40,19 +40,19 @@ function AddSourceDialog({ onSuccess }: { onSuccess: () => void }) {
     onSuccess: () => {
       toast.success("Fuente de captación creada");
       setOpen(false);
-      setForm({ name: "", portal: "idealista", baseUrl: "", scheduleInterval: 60, isActive: true });
+      setForm({ name: "", portal: "zonaprop", baseUrl: "", scheduleInterval: 60, isActive: true });
       onSuccess();
     },
     onError: (err) => toast.error(err.message),
   });
 
   const PORTAL_URLS: Record<string, string> = {
-    idealista: "https://www.idealista.com/venta-viviendas/",
-    fotocasa: "https://www.fotocasa.es/es/comprar/viviendas/",
-    habitaclia: "https://www.habitaclia.com/comprar/",
-    pisos_com: "https://www.pisos.com/pisos/venta/",
-    milanuncios: "https://www.milanuncios.com/pisos-en-venta/",
-    yaencontre: "https://www.yaencontre.com/pisos/venta/",
+    zonaprop: "https://www.zonaprop.com.ar/inmuebles-venta-capital-federal.html",
+    argenprop: "https://www.argenprop.com/departamento-en-venta--en-capital-federal",
+    mercadolibre: "https://inmuebles.mercadolibre.com.ar/venta/capital-federal/",
+    properati: "https://www.properati.com.ar/s/capital-federal/departamento/venta/",
+    remax: "https://www.remax.com.ar/listings/buy",
+    navent: "https://www.navent.com/inmuebles/venta/",
     otro: "",
   };
 
@@ -74,7 +74,7 @@ function AddSourceDialog({ onSuccess }: { onSuccess: () => void }) {
         >
           <div className="space-y-1.5">
             <Label>Nombre de la fuente *</Label>
-            <Input required placeholder="Ej: Idealista Madrid Pisos Venta" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+            <Input required placeholder="Ej: ZonaProp Buenos Aires Departamentos Venta" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
           </div>
           <div className="space-y-1.5">
             <Label>Portal inmobiliario</Label>
@@ -94,7 +94,7 @@ function AddSourceDialog({ onSuccess }: { onSuccess: () => void }) {
             <Label>URL de búsqueda *</Label>
             <Input
               required
-              placeholder="https://www.idealista.com/venta-viviendas/madrid/"
+              placeholder="https://www.zonaprop.com.ar/inmuebles-venta-capital-federal.html"
               value={form.baseUrl}
               onChange={e => setForm(f => ({ ...f, baseUrl: e.target.value }))}
             />

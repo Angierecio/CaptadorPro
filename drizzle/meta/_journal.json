@@ -15,6 +15,13 @@
       "when": 1771453481629,
       "tag": "0001_odd_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771803499683,
+      "tag": "0002_perpetual_lady_ursula",
+      "breakpoints": true
     }
   ]
 }

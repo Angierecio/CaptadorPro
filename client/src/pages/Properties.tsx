@@ -363,11 +363,12 @@ export default function Properties() {
               <SelectTrigger className="w-36"><SelectValue placeholder="Portal" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos los portales</SelectItem>
-                <SelectItem value="idealista">Idealista</SelectItem>
-                <SelectItem value="fotocasa">Fotocasa</SelectItem>
-                <SelectItem value="habitaclia">Habitaclia</SelectItem>
-                <SelectItem value="pisos_com">Pisos.com</SelectItem>
-                <SelectItem value="milanuncios">Milanuncios</SelectItem>
+                <SelectItem value="zonaprop">ZonaProp</SelectItem>
+                <SelectItem value="argenprop">Argenprop</SelectItem>
+                <SelectItem value="mercadolibre">MercadoLibre Inmuebles</SelectItem>
+                <SelectItem value="properati">Properati</SelectItem>
+                <SelectItem value="remax">RE/MAX Argentina</SelectItem>
+                <SelectItem value="navent">Navent</SelectItem>
               </SelectContent>
             </Select>
             {(filters.search || filters.propertyType !== "all" || filters.status !== "all") && (

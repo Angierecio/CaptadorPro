@@ -148,7 +148,7 @@ export const scrapingRouter = router({
     .input(
       z.object({
         name: z.string().min(1),
-        portal: z.enum(["idealista", "fotocasa", "habitaclia", "pisos_com", "milanuncios", "yaencontre", "otro"]),
+        portal: z.enum(["zonaprop", "argenprop", "mercadolibre", "properati", "remax", "navent", "otro"]),
         baseUrl: z.string().url("URL inválida"),
         searchParams: z.record(z.string(), z.any()).optional(),
         scheduleInterval: z.number().min(15).max(1440).default(60),

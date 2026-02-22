@@ -1,0 +1,1 @@
+ALTER TABLE `scraping_sources` MODIFY COLUMN `portal` enum('zonaprop','argenprop','mercadolibre','properati','remax','navent','otro') NOT NULL;

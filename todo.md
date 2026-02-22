@@ -70,3 +70,6 @@
 - [x] Footer con links y contacto
 - [x] Navbar pública con botón de login/acceso
 - [x] Enrutamiento: visitantes no autenticados ven landing, autenticados van al dashboard
+
+## Portales Argentinos
+- [x] Actualizar lista de portales inmobiliarios a los principales de Argentina (Buenos Aires)
