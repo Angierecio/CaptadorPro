@@ -13,10 +13,23 @@ export function useAuth(options?: UseAuthOptions) {
     options ?? {};
   const utils = trpc.useUtils();
 
+  // --- MODO HACK ACTIVADO ---
+  // Comentamos la consulta real al servidor para que no busque a Google
+  /*
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
   });
+  */
+
+  // Simulamos que el servidor nos ha respondido con tu usuario de Supabase
+  const fakeUser = {
+    id: 4, 
+    name: "Admin Pro", 
+    email: "admin@local.com", 
+    role: "admin", 
+    isActive: true 
+  };
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
@@ -25,60 +38,38 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
-    try {
-      await logoutMutation.mutateAsync();
-    } catch (error: unknown) {
-      if (
-        error instanceof TRPCClientError &&
-        error.data?.code === "UNAUTHORIZED"
-      ) {
-        return;
-      }
-      throw error;
-    } finally {
-      utils.auth.me.setData(undefined, null);
-      await utils.auth.me.invalidate();
-    }
-  }, [logoutMutation, utils]);
+    // En modo hack, el logout solo te avisa pero no hace falta borrar sesión real
+    console.log("Logout simulado");
+    window.location.href = "/";
+  }, []);
 
   const state = useMemo(() => {
+    // Guardamos al usuario "fake" en el almacenamiento local para que la web lo reconozca
     localStorage.setItem(
       "manus-runtime-user-info",
-      JSON.stringify(meQuery.data)
+      JSON.stringify(fakeUser)
     );
+    
     return {
-      user: meQuery.data ?? null,
-      loading: meQuery.isLoading || logoutMutation.isPending,
-      error: meQuery.error ?? logoutMutation.error ?? null,
-      isAuthenticated: Boolean(meQuery.data),
+      user: fakeUser, // <--- Forzamos al Usuario 4
+      loading: false, // <--- No hay espera
+      error: null,
+      isAuthenticated: true, // <--- ¡Puerta abierta!
     };
-  }, [
-    meQuery.data,
-    meQuery.error,
-    meQuery.isLoading,
-    logoutMutation.error,
-    logoutMutation.isPending,
-  ]);
+  }, [logoutMutation.error, logoutMutation.isPending]);
 
   useEffect(() => {
+    // En modo hack, nunca redirigimos al login porque ya estamos "dentro"
     if (!redirectOnUnauthenticated) return;
-    if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
-    if (typeof window === "undefined") return;
-    if (window.location.pathname === redirectPath) return;
-
-    window.location.href = redirectPath
-  }, [
-    redirectOnUnauthenticated,
-    redirectPath,
-    logoutMutation.isPending,
-    meQuery.isLoading,
-    state.user,
-  ]);
+    
+    // Si por algún motivo se pierde el usuario, podrías mandarlo al inicio
+    // window.location.href = "/" 
+  }, [state.user]);
 
   return {
     ...state,
-    refresh: () => meQuery.refetch(),
+    refresh: () => console.log("Refresh simulado"),
     logout,
   };
 }

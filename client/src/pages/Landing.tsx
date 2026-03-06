@@ -504,7 +504,7 @@ export default function Landing() {
                 </li>
                 <li className="flex items-center gap-2 text-sm text-gray-500">
                   <Phone className="w-4 h-4" />
-                  +34 697 218 330
+                  +54 11 9 3797 7385
                 </li>
               </ul>
             </div>

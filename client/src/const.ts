@@ -1,17 +1,20 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
-// Generate login URL at runtime so redirect URI reflects the current origin.
+// Generamos la URL de login apuntando directamente a nuestro servidor (Puerto 3000)
 export const getLoginUrl = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID;
-  const redirectUri = `${window.location.origin}/api/oauth/callback`;
+  // Forzamos la dirección del servidor para que no haya errores de URL inválida
+  const oauthPortalUrl = "http://localhost:3000";
+  const appId = "captador-pro-local";
+  
+  // Queremos que después de "loguearnos" nos devuelva al Dashboard de la web
+  const redirectUri = "http://localhost:5173/dashboard";
   const state = btoa(redirectUri);
 
-  const url = new URL(`${oauthPortalUrl}/app-auth`);
+  // Usamos la ruta de autenticación directa del servidor
+  const url = new URL(`${oauthPortalUrl}/auth/google`);
   url.searchParams.set("appId", appId);
   url.searchParams.set("redirectUri", redirectUri);
   url.searchParams.set("state", state);
-  url.searchParams.set("type", "signIn");
 
   return url.toString();
 };
