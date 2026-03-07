@@ -143,7 +143,7 @@ function buildHtml(p: PropertyPdfData): string {
   <div class="header-brand">
     <div class="header-logo">P</div>
     <div>
-      <div class="header-brand-name">${p.agencyName || "PropTech Captación"}</div>
+      <div class="header-brand-name">${p.agencyName || "CaptadorPro"}</div>
       <div class="header-brand-sub">Ficha de Propiedad</div>
     </div>
   </div>
@@ -242,7 +242,7 @@ function buildHtml(p: PropertyPdfData): string {
 
 <div class="gold-divider"></div>
 <div class="footer">
-  <div class="footer-brand">${p.agencyName || "PropTech Captación"}</div>
+  <div class="footer-brand">${p.agencyName || "CaptadorPro"}</div>
   <div>Ficha generada el ${new Date().toLocaleDateString("es-ES", { day: "2-digit", month: "long", year: "numeric" })} · Ref. #${p.id}</div>
   <div>Documento confidencial · Uso exclusivo del agente</div>
 </div>

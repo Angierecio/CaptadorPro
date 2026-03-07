@@ -1,4 +1,4 @@
-# PropTech Captación - TODO
+# CaptadorPro - TODO
 
 ## Base de Datos y Backend
 - [x] Esquema de BD: tabla properties (propiedades captadas)

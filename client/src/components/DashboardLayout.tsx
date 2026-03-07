@@ -155,7 +155,7 @@ function DashboardLayoutContent({
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold truncate leading-none" style={{ color: "oklch(0.98 0.005 240)" }}>
-                      PropTech
+                      CaptadorPro
                     </p>
                     <p className="text-xs truncate mt-0.5" style={{ color: "oklch(0.65 0.05 240)" }}>
                       Captación Pro
@@ -258,7 +258,7 @@ function DashboardLayoutContent({
         {!isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>PropTech Captación</span>
+              <span>CaptadorPro</span>
               {activeMenuItem && (
                 <>
                   <ChevronRight className="h-3.5 w-3.5" />
