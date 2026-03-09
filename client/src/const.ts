@@ -1,16 +1,19 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
-// Generamos la URL de login apuntando directamente a nuestro servidor (Puerto 3000)
 export const getLoginUrl = () => {
-  // Forzamos la dirección del servidor para que no haya errores de URL inválida
-  const oauthPortalUrl = "http://localhost:3000";
-  const appId = "captador-pro-local";
+  // 1. Detectamos si estamos en producción o en local
+  const isProd = typeof window !== 'undefined' && window.location.hostname !== 'localhost';
   
-  // Queremos que después de "loguearnos" nos devuelva al Dashboard de la web
-  const redirectUri = "http://localhost:5173/dashboard";
+  // 2. Usamos las variables de Vercel (si existen) o localhost como plan B
+  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL || "http://localhost:3000";
+  const appId = import.meta.env.VITE_APP_ID || "captador-pro-local";
+  
+  // 3. Generamos la URL de retorno automáticamente (www.captadorpro.com/dashboard)
+  const origin = typeof window !== 'undefined' ? window.location.origin : "http://localhost:5173";
+  const redirectUri = `${origin}/dashboard`;
   const state = btoa(redirectUri);
 
-  // Usamos la ruta de autenticación directa del servidor
+  // 4. Construimos la URL final
   const url = new URL(`${oauthPortalUrl}/auth/google`);
   url.searchParams.set("appId", appId);
   url.searchParams.set("redirectUri", redirectUri);
