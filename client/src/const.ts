@@ -14,7 +14,7 @@ export const getLoginUrl = () => {
   const state = btoa(redirectUri);
 
   // 4. Construimos la URL final
-  const url = new URL(`${oauthPortalUrl}/auth/google`);
+  const url = new URL(`${origin}/api/auth/google`);
   url.searchParams.set("appId", appId);
   url.searchParams.set("redirectUri", redirectUri);
   url.searchParams.set("state", state);
