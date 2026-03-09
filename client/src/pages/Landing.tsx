@@ -34,7 +34,7 @@ export default function Landing() {
   }, [user, loading]);
 
   const handleLogin = () => {
-    window.location.href = getLoginUrl();
+    window.location.href = "/login";
   };
 
   return (

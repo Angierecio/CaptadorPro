@@ -13,6 +13,7 @@ import Leads from "./pages/Leads";
 import LeadDetail from "./pages/LeadDetail";
 import Scraping from "./pages/Scraping";
 import Agents from "./pages/Agents";
+import Auth from "./pages/Auth"; // Importamos tu nueva página de Login
 
 function DashboardRoutes() {
   return (
@@ -35,9 +36,13 @@ function DashboardRoutes() {
 function Router() {
   return (
     <Switch>
-      {/* Landing pública — visible para todos sin autenticación */}
+      {/* Landing pública — visible para todos */}
       <Route path="/" component={Landing} />
-      {/* Rutas del dashboard — requieren autenticación (gestionado en DashboardLayout) */}
+
+      {/* NUEVA RUTA: Página de Login/Auth */}
+      <Route path="/login" component={Auth} />
+
+      {/* Rutas del dashboard — requieren autenticación */}
       <Route path="/dashboard" component={DashboardRoutes} />
       <Route path="/properties" component={DashboardRoutes} />
       <Route path="/properties/:id" component={DashboardRoutes} />
@@ -45,6 +50,7 @@ function Router() {
       <Route path="/leads/:id" component={DashboardRoutes} />
       <Route path="/scraping" component={DashboardRoutes} />
       <Route path="/agents" component={DashboardRoutes} />
+      
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
