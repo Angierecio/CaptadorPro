@@ -40,12 +40,13 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      // 🚀 URL ABSOLUTA DE RAILWAY PARA QUE LAS COOKIES VIAJEN BIEN
+      url: "https://proptech-captacion-production.up.railway.app/api/trpc",
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),
-          credentials: "include",
+          credentials: "include", // <-- Ordenamos al navegador llevar la llave
         });
       },
     }),

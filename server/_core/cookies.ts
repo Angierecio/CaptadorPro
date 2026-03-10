@@ -1,18 +1,15 @@
 import type { CookieOptions, Request } from "express";
 
 export function getSessionCookieOptions(req: Request): CookieOptions {
-  // 1. Detectamos si estamos en producción (no es localhost)
-  const isProd = !req.hostname.includes("localhost") && !req.hostname.includes("127.0.0.1");
-
   return {
     httpOnly: true,
     path: "/",
-    // 'none' es obligatorio para que la cookie viaje de Railway a Vercel
+    // 'none' permite que la cookie viaje desde tu API en Railway a tu web en Vercel
     sameSite: "none", 
-    // 'secure' debe ser true en producción para que 'none' funcione
+    // 'secure' debe ser true siempre para que 'sameSite: none' funcione en 2026
     secure: true, 
-    // 2. ACTIVAMOS EL DOMINIO: Esto es lo que evita el rebote
-    // Usamos ".captadorpro.com" para que valga para la web y para la API
-    domain: isProd ? ".captadorpro.com" : undefined,
+    // 🚩 IMPORTANTE: Al dejar el dominio como undefined, la cookie se queda 
+    // en Railway y el navegador la enviará correctamente al usar la URL absoluta.
+    domain: undefined,
   };
 }
