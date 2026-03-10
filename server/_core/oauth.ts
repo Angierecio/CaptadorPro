@@ -17,7 +17,7 @@ export function registerOAuthRoutes(app: Express) {
   app.get("/api/auth/google", async (req: Request, res: Response) => {
     try {
       // Definimos a dónde debe volver Google después del login
-      const callbackUrl = `https://www.captadorpro.com/api/auth/google/callback`;
+      const callbackUrl = `https://captadorpro.com/api/auth/google/callback`;
       
       // El sistema de Manus espera que el "state" sea la URL de retorno en base64
       const state = Buffer.from(callbackUrl).toString('base64');
