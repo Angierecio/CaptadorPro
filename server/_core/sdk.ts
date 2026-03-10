@@ -46,13 +46,27 @@ class SDKServer {
     const cookies = parseCookieHeader(cookieHeader || "");
     const sessionCookie = cookies[COOKIE_NAME];
     
-    if (!sessionCookie) throw ForbiddenError("No session");
+    if (!sessionCookie) {
+      console.log("[AUTH] Error: No se encontró la cookie en la petición");
+      throw ForbiddenError("Sesión no encontrada");
+    }
     
-    const { payload } = await jwtVerify(sessionCookie, this.getSessionSecret());
-    const user = await db.getUserByOpenId(payload.openId as string);
-    
-    if (!user) throw ForbiddenError("User not found");
-    return user as User;
+    try {
+      const { payload } = await jwtVerify(sessionCookie, this.getSessionSecret());
+      const openId = payload.openId as string;
+      
+      const user = await db.getUserByOpenId(openId);
+      
+      if (!user) {
+        console.log(`[AUTH] Error: Usuario con openId ${openId} no existe en DB`);
+        throw ForbiddenError("Usuario no registrado");
+      }
+      
+      return user as User;
+    } catch (error) {
+      console.log("[AUTH] Error: El token JWT no es válido o ha expirado");
+      throw ForbiddenError("Sesión inválida");
+    }
   }
 }
 
