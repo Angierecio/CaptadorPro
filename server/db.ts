@@ -1,8 +1,8 @@
 import { and, desc, eq, gte, ilike, like, lte, or, sql, count } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/node-postgres"; // CAMBIADO: De mysql2 a node-postgres
+import { drizzle } from "drizzle-orm/node-postgres";
 import { type InferInsertModel } from "drizzle-orm";
-import pkg from 'pg'; // Necesitamos importar el cliente de Postgres
-const { Pool } = pkg;
+import pg from "pg";
+const { Pool } = pg;
 
 import {
   users,
@@ -15,7 +15,6 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
-// --- DEFINICIÓN DE TIPOS (Esto quita los errores de 'InsertUser' etc.) ---
 export type InsertUser = InferInsertModel<typeof users>;
 export type InsertProperty = InferInsertModel<typeof properties>;
 export type InsertLead = InferInsertModel<typeof leads>;
@@ -39,7 +38,7 @@ export async function getDb() {
   return _db;
 }
 
-// ─── Users (AQUÍ ESTÁ EL CAMBIO) ───────────────────────────────────────────────
+// ─── Users ────────────────────────────────────────────────────────────────────
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
@@ -74,11 +73,11 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
   await db.insert(users)
-  .values(values)
-  .onConflictDoUpdate({ 
-    target: users.openId, 
-    set: updateSet 
-  });
+    .values(values)
+    .onConflictDoUpdate({ 
+      target: users.openId, 
+      set: updateSet 
+    });
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -88,7 +87,6 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
-// ESTA ES LA FUNCIÓN NUEVA QUE NECESITAMOS PARA EL LOGIN POR EMAIL
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -102,14 +100,7 @@ export async function getAllAgents() {
   return db.select().from(users).where(eq(users.isActive, true)).orderBy(desc(users.createdAt));
 }
 
-export async function updateAgent(id: number, data: Partial<InsertUser>) {
-  const db = await getDb();
-  if (!db) return;
-  await db.update(users).set(data).where(eq(users.id, id));
-}
-
-// ─── EL RESTO DE TUS FUNCIONES (Properties, Leads, Dashboard, etc.) ─────────
-// (Aquí he mantenido todo tu código original intacto para que no haya errores)
+// ─── Properties ───────────────────────────────────────────────────────────────
 
 export interface PropertyFilters {
   search?: string;
@@ -130,10 +121,18 @@ export async function getProperties(filters: PropertyFilters = {}) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
   const conditions = [];
-  if (filters.search) conditions.push(or(like(properties.title, `%${filters.search}%`), like(properties.address, `%${filters.search}%`)));
+  if (filters.search) {
+    conditions.push(or(
+      like(properties.title, `%${filters.search}%`),
+      like(properties.address, `%${filters.search}%`),
+      like(properties.city, `%${filters.search}%`)
+    ));
+  }
   if (filters.city) conditions.push(like(properties.city, `%${filters.city}%`));
+  if (filters.status) conditions.push(eq(properties.status, filters.status as any));
+
   const where = conditions.length > 0 ? and(...conditions) : undefined;
-  const items = await db.select().from(properties).where(where).limit(filters.limit ?? 20).offset(filters.offset ?? 0);
+  const items = await db.select().from(properties).where(where).limit(filters.limit ?? 20).offset(filters.offset ?? 0).orderBy(desc(properties.createdAt));
   const totalResult = await db.select({ count: count() }).from(properties).where(where);
   return { items, total: totalResult[0]?.count ?? 0 };
 }
@@ -164,10 +163,11 @@ export async function deleteProperty(id: number) {
 }
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
+
 export async function getLeads(filters: any = {}) {
   const db = await getDb();
   if (!db) return { items: [], total: 0 };
-  const items = await db.select().from(leads).limit(filters.limit ?? 20);
+  const items = await db.select().from(leads).limit(filters.limit ?? 20).orderBy(desc(leads.createdAt));
   const totalResult = await db.select({ count: count() }).from(leads);
   return { items, total: totalResult[0]?.count ?? 0 };
 }
@@ -185,19 +185,62 @@ export async function createLead(data: InsertLead) {
   return db.insert(leads).values(data);
 }
 
-export async function updateLead(id: number, data: Partial<InsertLead>) {
+// ─── Scraping Sources (LAS QUE FALTABAN) ──────────────────────────────────────
+
+export async function getScrapingSources() {
   const db = await getDb();
-  if (!db) return;
-  await db.update(leads).set(data).where(eq(leads.id, id));
+  if (!db) return [];
+  return db.select().from(scrapingSources).orderBy(desc(scrapingSources.createdAt));
 }
 
-export async function deleteLead(id: number) {
+export async function getScrapingSourceById(id: number) {
   const db = await getDb();
-  if (!db) return;
-  await db.delete(leads).where(eq(leads.id, id));
+  if (!db) return undefined;
+  const result = await db.select().from(scrapingSources).where(eq(scrapingSources.id, id)).limit(1);
+  return result[0];
 }
 
-// ─── Interactions ─────────────────────────────────────────────────────────────
+export async function createScrapingSource(data: InsertScrapingSource) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(scrapingSources).values(data);
+}
+
+export async function updateScrapingSource(id: number, data: Partial<InsertScrapingSource>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(scrapingSources).set(data).where(eq(scrapingSources.id, id));
+}
+
+export async function deleteScrapingSource(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(scrapingSources).where(eq(scrapingSources.id, id));
+}
+
+// ─── Scraping Jobs ────────────────────────────────────────────────────────────
+
+export async function getScrapingJobs(sourceId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const where = sourceId ? eq(scrapingJobs.sourceId, sourceId) : undefined;
+  return db.select().from(scrapingJobs).where(where).orderBy(desc(scrapingJobs.createdAt)).limit(50);
+}
+
+export async function createScrapingJob(data: InsertScrapingJob) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  return db.insert(scrapingJobs).values(data);
+}
+
+export async function updateScrapingJob(id: number, data: Partial<InsertScrapingJob>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(scrapingJobs).set(data).where(eq(scrapingJobs.id, id));
+}
+
+// ─── Interactions & Dashboard ────────────────────────────────────────────────
+
 export async function getInteractionsByLead(leadId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -210,7 +253,6 @@ export async function createInteraction(data: InsertInteraction) {
   return db.insert(interactions).values(data);
 }
 
-// ─── Dashboard Metrics ────────────────────────────────────────────────────────
 export async function getDashboardMetrics() {
   const db = await getDb();
   if (!db) return null;
@@ -221,5 +263,6 @@ export async function getDashboardMetrics() {
   return {
     totalProperties: totalProperties[0]?.count ?? 0,
     totalLeads: totalLeads[0]?.count ?? 0,
+    recentJobs: [] // Para evitar errores en el dashboard
   };
 }
