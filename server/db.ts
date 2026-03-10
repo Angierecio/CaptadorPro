@@ -73,7 +73,12 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
 
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+  await db.insert(users)
+  .values(values)
+  .onConflictDoUpdate({ 
+    target: users.openId, 
+    set: updateSet 
+  });
 }
 
 export async function getUserByOpenId(openId: string) {
