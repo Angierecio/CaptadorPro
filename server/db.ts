@@ -15,6 +15,7 @@ import {
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
+// --- TIPOS ---
 export type InsertUser = InferInsertModel<typeof users>;
 export type InsertProperty = InferInsertModel<typeof properties>;
 export type InsertLead = InferInsertModel<typeof leads>;
@@ -38,7 +39,7 @@ export async function getDb() {
   return _db;
 }
 
-// ─── Users ────────────────────────────────────────────────────────────────────
+// ─── USERS ────────────────────────────────────────────────────────────────────
 
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
@@ -100,7 +101,13 @@ export async function getAllAgents() {
   return db.select().from(users).where(eq(users.isActive, true)).orderBy(desc(users.createdAt));
 }
 
-// ─── Properties ───────────────────────────────────────────────────────────────
+export async function updateAgent(id: number, data: Partial<InsertUser>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set(data).where(eq(users.id, id));
+}
+
+// ─── PROPERTIES ───────────────────────────────────────────────────────────────
 
 export interface PropertyFilters {
   search?: string;
@@ -130,6 +137,7 @@ export async function getProperties(filters: PropertyFilters = {}) {
   }
   if (filters.city) conditions.push(like(properties.city, `%${filters.city}%`));
   if (filters.status) conditions.push(eq(properties.status, filters.status as any));
+  if (filters.assignedAgentId) conditions.push(eq(properties.assignedAgentId, filters.assignedAgentId));
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
   const items = await db.select().from(properties).where(where).limit(filters.limit ?? 20).offset(filters.offset ?? 0).orderBy(desc(properties.createdAt));
@@ -162,7 +170,7 @@ export async function deleteProperty(id: number) {
   await db.delete(properties).where(eq(properties.id, id));
 }
 
-// ─── Leads ────────────────────────────────────────────────────────────────────
+// ─── LEADS ────────────────────────────────────────────────────────────────────
 
 export async function getLeads(filters: any = {}) {
   const db = await getDb();
@@ -185,7 +193,19 @@ export async function createLead(data: InsertLead) {
   return db.insert(leads).values(data);
 }
 
-// ─── Scraping Sources (LAS QUE FALTABAN) ──────────────────────────────────────
+export async function updateLead(id: number, data: Partial<InsertLead>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(leads).set(data).where(eq(leads.id, id));
+}
+
+export async function deleteLead(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(leads).where(eq(leads.id, id));
+}
+
+// ─── SCRAPING ────────────────────────────────────────────────────────────────
 
 export async function getScrapingSources() {
   const db = await getDb();
@@ -218,8 +238,6 @@ export async function deleteScrapingSource(id: number) {
   await db.delete(scrapingSources).where(eq(scrapingSources.id, id));
 }
 
-// ─── Scraping Jobs ────────────────────────────────────────────────────────────
-
 export async function getScrapingJobs(sourceId?: number) {
   const db = await getDb();
   if (!db) return [];
@@ -239,7 +257,7 @@ export async function updateScrapingJob(id: number, data: Partial<InsertScraping
   await db.update(scrapingJobs).set(data).where(eq(scrapingJobs.id, id));
 }
 
-// ─── Interactions & Dashboard ────────────────────────────────────────────────
+// ─── INTERACTIONS & DASHBOARD ────────────────────────────────────────────────
 
 export async function getInteractionsByLead(leadId: number) {
   const db = await getDb();
@@ -256,13 +274,14 @@ export async function createInteraction(data: InsertInteraction) {
 export async function getDashboardMetrics() {
   const db = await getDb();
   if (!db) return null;
-  const [totalProperties, totalLeads] = await Promise.all([
+  const [totalProperties, totalLeads, recentJobs] = await Promise.all([
     db.select({ count: count() }).from(properties),
     db.select({ count: count() }).from(leads),
+    db.select().from(scrapingJobs).orderBy(desc(scrapingJobs.createdAt)).limit(5),
   ]);
   return {
     totalProperties: totalProperties[0]?.count ?? 0,
     totalLeads: totalLeads[0]?.count ?? 0,
-    recentJobs: [] // Para evitar errores en el dashboard
+    recentJobs: recentJobs || []
   };
 }
