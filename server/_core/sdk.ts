@@ -21,7 +21,7 @@ class SDKServer {
   async exchangeCodeForToken(code: string, state: string): Promise<any> {
     try {
       // Decodificamos el estado de forma segura para Node.js
-      const redirectUri = Buffer.from(state, 'base64').toString('utf-8');
+      const redirectUri = `${oauthPortalUrl}/api/auth/google/callback`;
       
       const response = await axios.post('https://oauth2.googleapis.com/token', {
         code,
