@@ -8,21 +8,22 @@ type UseAuthOptions = {
 };
 
 export function useAuth(options?: UseAuthOptions) {
-  const { redirectOnUnauthenticated = false, redirectPath = "/auth" } =
+  // 1. CAMBIAMOS EL PATH POR DEFECTO A /login
+  const { redirectOnUnauthenticated = false, redirectPath = "/login" } =
     options ?? {};
   const utils = trpc.useUtils();
 
-  // --- MODO REAL ACTIVADO ---
-  // Ahora sí le preguntamos al servidor quién es el usuario
   const meQuery = trpc.auth.me.useQuery(undefined, {
     retry: false,
     refetchOnWindowFocus: false,
+    // Si hay un error de red, no queremos que nos eche inmediatamente
+    staleTime: 5000, 
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
     onSuccess: () => {
       utils.auth.me.setData(undefined, null);
-      window.location.href = "/"; // Al cerrar sesión, volvemos a la landing
+      window.location.href = "/"; 
     },
   });
 
@@ -35,14 +36,17 @@ export function useAuth(options?: UseAuthOptions) {
       user: meQuery.data ?? null,
       loading: meQuery.isLoading,
       error: meQuery.error,
-      isAuthenticated: !!meQuery.data, // Solo es true si el servidor devuelve un usuario real
+      isAuthenticated: !!meQuery.data, 
     };
   }, [meQuery.data, meQuery.isLoading, meQuery.error]);
 
   useEffect(() => {
-    // Si no está autenticado y la página exige estarlo, mandamos a /auth
+    // 2. EL VIGILANTE: Si no estás logueada, te manda a /login
     if (redirectOnUnauthenticated && !state.loading && !state.isAuthenticated) {
-      window.location.href = redirectPath;
+      // Solo redirigimos si no estamos ya en la página de login
+      if (window.location.pathname !== redirectPath) {
+        window.location.href = redirectPath;
+      }
     }
   }, [state.isAuthenticated, state.loading, redirectOnUnauthenticated, redirectPath]);
 

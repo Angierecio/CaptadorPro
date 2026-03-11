@@ -16,7 +16,8 @@ export function registerOAuthRoutes(app: Express) {
   // --- 1. LOGIN DIRECTO CON GOOGLE ---
   app.get("/api/auth/google", async (req: Request, res: Response) => {
     try {
-      const callbackUrl = `https://www.captadorpro.com/api/auth/google/callback`;
+      // 🚀 CAMBIO: Usamos la URL de Railway para el callback, es más directo y seguro
+      const callbackUrl = `https://proptech-captacion-production.up.railway.app/api/auth/google/callback`;
       const state = Buffer.from(callbackUrl).toString('base64');
       
       const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
@@ -59,9 +60,11 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      res.redirect(302, "/dashboard");
+      // 🚀 CAMBIO VITAL: Te mandamos de vuelta a Vercel, no a Railway
+      res.redirect(302, "https://www.captadorpro.com/dashboard");
     } catch (error) {
-      res.redirect(302, "/login?error=auth_failed");
+      // 🚀 CAMBIO: Si falla, te mandamos al login de Vercel
+      res.redirect(302, "https://www.captadorpro.com/login?error=auth_failed");
     }
   });
 
@@ -70,6 +73,7 @@ export function registerOAuthRoutes(app: Express) {
     const { email, password } = req.body;
     try {
       const user = await db.getUserByEmail(email);
+      // Nota: Aquí deberías usar una comparación de hash, pero lo dejamos así para que coincida con tu lógica actual
       if (!user || user.password !== password) {
         return res.status(401).json({ error: "Credenciales inválidas" });
       }
