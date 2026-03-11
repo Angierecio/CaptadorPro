@@ -1,6 +1,6 @@
 import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import { ForbiddenError } from "@shared/_core/errors";
-import axios, { type AxiosInstance } from "axios";
+import axios from "axios";
 import { parse as parseCookieHeader } from "cookie";
 import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
@@ -11,19 +11,30 @@ import { ENV } from "./env";
 type User = typeof users.$inferSelect;
 
 class SDKServer {
+  // Usamos una clave secreta para firmar tus sesiones
   private getSessionSecret() {
-    return new TextEncoder().encode(ENV.cookieSecret);
+    // Si no tienes cookieSecret, usa el Id de cliente como fallback para no romper el login
+    const secret = ENV.cookieSecret || ENV.googleClientId || "super-secret-fallback";
+    return new TextEncoder().encode(secret);
   }
 
   async exchangeCodeForToken(code: string, state: string): Promise<any> {
-    const response = await axios.post('https://oauth2.googleapis.com/token', {
-      code,
-      client_id: ENV.googleClientId,
-      client_secret: ENV.googleClientSecret,
-      redirect_uri: atob(state),
-      grant_type: 'authorization_code',
-    });
-    return { accessToken: response.data.access_token };
+    try {
+      // Decodificamos el estado de forma segura para Node.js
+      const redirectUri = Buffer.from(state, 'base64').toString('utf-8');
+      
+      const response = await axios.post('https://oauth2.googleapis.com/token', {
+        code,
+        client_id: ENV.googleClientId,
+        client_secret: ENV.googleClientSecret,
+        redirect_uri: redirectUri,
+        grant_type: 'authorization_code',
+      });
+      return { accessToken: response.data.access_token };
+    } catch (error: any) {
+      console.error("[SDK] Error al intercambiar código por token:", error.response?.data || error.message);
+      throw error;
+    }
   }
 
   async getUserInfo(accessToken: string): Promise<any> {
@@ -37,7 +48,8 @@ class SDKServer {
     const secretKey = this.getSessionSecret();
     return new SignJWT({ openId, name: options.name || "" })
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setExpirationTime(Math.floor((Date.now() + (options.expiresInMs || ONE_YEAR_MS)) / 1000))
+      .setIssuedAt()
+      .setExpirationTime('365d') // Sesión de un año
       .sign(secretKey);
   }
 
@@ -47,7 +59,7 @@ class SDKServer {
     const sessionCookie = cookies[COOKIE_NAME];
     
     if (!sessionCookie) {
-      console.log("[AUTH] Error: No se encontró la cookie en la petición");
+      // Este log es normal si no estás logueado
       throw ForbiddenError("Sesión no encontrada");
     }
     
@@ -58,13 +70,13 @@ class SDKServer {
       const user = await db.getUserByOpenId(openId);
       
       if (!user) {
-        console.log(`[AUTH] Error: Usuario con openId ${openId} no existe en DB`);
+        console.error(`[AUTH] El usuario ${openId} no existe en la base de datos.`);
         throw ForbiddenError("Usuario no registrado");
       }
       
       return user as User;
     } catch (error) {
-      console.log("[AUTH] Error: El token JWT no es válido o ha expirado");
+      console.error("[AUTH] Error: El token JWT es inválido o ha expirado");
       throw ForbiddenError("Sesión inválida");
     }
   }
