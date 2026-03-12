@@ -61,7 +61,8 @@ export function registerOAuthRoutes(app: Express) {
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
       // 🚀 CAMBIO VITAL: Te mandamos de vuelta a Vercel, no a Railway
-      res.redirect(302, "https://www.captadorpro.com/dashboard");
+      const frontendUrl = process.env.FRONTEND_URL || "https://www.captadorpro.com";
+res.redirect(302, `${frontendUrl}/dashboard`);
     } catch (error) {
       // 🚀 CAMBIO: Si falla, te mandamos al login de Vercel
       res.redirect(302, "https://www.captadorpro.com/login?error=auth_failed");
