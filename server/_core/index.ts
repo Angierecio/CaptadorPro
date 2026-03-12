@@ -1,6 +1,6 @@
 import "dotenv/config";
 import express from "express";
-import cors from "cors"; // 1. IMPORTADO
+import cors from "cors";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
@@ -10,7 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerPdfRoutes } from "../pdfRoutes";
 
-function isPortAvailable(port: number): Promise<boolean> {
+function isPortAvailable(port: number ): Promise<boolean> {
   return new Promise(resolve => {
     const server = net.createServer();
     server.listen(port, () => {
@@ -33,28 +33,23 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // 2. CONFIGURACIÓN DE CORS (Añadido aquí para que sea lo primero)
+  // 1. CONFIGURACIÓN DE CORS
   app.use(cors({
     origin: ["https://www.captadorpro.com", "https://captadorpro.com"],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
-  }));
+  } ));
 
-  // 3. CONFIANZA EN PROXY (Necesario para cookies en Railway/Vercel)
+  // 2. CONFIANZA EN PROXY (Necesario para cookies en Railway/Vercel)
   app.set("trust proxy", 1);
 
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-  // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
-
-  // PDF generation routes
   registerPdfRoutes(app);
 
-  // tRPC API
   app.use(
     "/api/trpc",
     createExpressMiddleware({
@@ -63,22 +58,21 @@ async function startServer() {
     })
   );
 
-  // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
+  // 🚀 CORRECCIÓN DEL PUERTO PARA RAILWAY
+  // En producción usamos el puerto de Railway directamente. En desarrollo buscamos uno libre.
+  const port = process.env.NODE_ENV === "production"
+    ? parseInt(process.env.PORT || "8080")
+    : await findAvailablePort(3000);
 
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-  }
-
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
+  // 🚩 Escuchamos en "0.0.0.0" para que Railway pueda acceder externamente
+  server.listen(port, "0.0.0.0", () => {
+    console.log(`Server running on port ${port}`);
   });
 }
 
