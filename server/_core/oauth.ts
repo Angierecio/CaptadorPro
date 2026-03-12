@@ -2,7 +2,6 @@ import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "../db";
 import { getSessionCookieOptions } from "./cookies";
-import { notifyOwner } from "./notification";
 import { sdk } from "./sdk";
 import { ENV } from "./env";
 
@@ -13,29 +12,25 @@ function getQueryParam(req: Request, key: string): string | undefined {
 
 export function registerOAuthRoutes(app: Express) {
   
-  // --- 1. LOGIN DIRECTO CON GOOGLE ---
-  // server/_core/oauth.ts
-
-app.get("/api/auth/google", async (req: Request, res: Response) => {
-  try {
-    const callbackUrl = `https://proptech-captacion-production.up.railway.app/api/auth/google/callback`;
-    const state = Buffer.from(callbackUrl ).toString('base64');
-    
-    // 🚀 CORRECCIÓN AQUÍ: redirect_uri debe estar limpio
-    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
-      `client_id=${ENV.googleClientId}&` +
-      `redirect_uri=${encodeURIComponent(callbackUrl )}&` +
-      `response_type=code&` +
-      `scope=openid%20profile%20email&` +
-      `state=${state}`;
-    
-    res.redirect(302, googleUrl);
-  } catch (error) {
-    console.error("Error en /api/auth/google:", error);
-    res.status(500).json({ error: "Error al conectar con Google" });
-  }
-});
-
+  // --- 1. LOGIN CON GOOGLE ---
+  app.get("/api/auth/google", async (req: Request, res: Response) => {
+    try {
+      const callbackUrl = `https://proptech-captacion-production.up.railway.app/api/auth/google/callback`;
+      const state = Buffer.from(callbackUrl ).toString('base64');
+      
+      const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
+        `client_id=${ENV.googleClientId}&` +
+        `redirect_uri=${encodeURIComponent(callbackUrl )}&` +
+        `response_type=code&` +
+        `scope=openid%20profile%20email&` +
+        `state=${state}`;
+      
+      res.redirect(302, googleUrl);
+    } catch (error) {
+      console.error("Error al iniciar Google Auth:", error);
+      res.status(500).json({ error: "Error al conectar con Google" });
+    }
+  });
 
   // --- 2. CALLBACK DE GOOGLE ---
   app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
@@ -45,9 +40,11 @@ app.get("/api/auth/google", async (req: Request, res: Response) => {
     if (!code) return res.status(400).send("No code provided");
 
     try {
+      // 🚀 Intercambiamos el código por el token
       const tokenResponse = await sdk.exchangeCodeForToken(code, state || "");
       const userInfo = await sdk.getUserInfo(tokenResponse.accessToken);
 
+      // 🚀 Guardamos en la base de datos
       await db.upsertUser({
         openId: userInfo.openId,
         name: userInfo.name || null,
@@ -64,21 +61,19 @@ app.get("/api/auth/google", async (req: Request, res: Response) => {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // 🚀 CAMBIO VITAL: Te mandamos de vuelta a Vercel, no a Railway
-      const frontendUrl = process.env.FRONTEND_URL || "https://www.captadorpro.com";
-res.redirect(302, `${frontendUrl}/dashboard`);
+      // 🚀 Redirigimos al dashboard
+      res.redirect(302, "https://www.captadorpro.com/dashboard" );
     } catch (error) {
-      // 🚀 CAMBIO: Si falla, te mandamos al login de Vercel
-      res.redirect(302, "https://www.captadorpro.com/login?error=auth_failed");
+      console.error("ERROR CRÍTICO EN CALLBACK:", error); // 🚩 Esto nos dirá el fallo real en Railway
+      res.redirect(302, "https://www.captadorpro.com/login?error=auth_failed" );
     }
   });
 
-  // --- 3. LOGIN MANUAL (EMAIL/PASSWORD) ---
+  // --- 3. LOGIN MANUAL ---
   app.post("/api/auth/login", async (req: Request, res: Response) => {
     const { email, password } = req.body;
     try {
       const user = await db.getUserByEmail(email);
-      // Nota: Aquí deberías usar una comparación de hash, pero lo dejamos así para que coincida con tu lógica actual
       if (!user || user.password !== password) {
         return res.status(401).json({ error: "Credenciales inválidas" });
       }
