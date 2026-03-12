@@ -14,24 +14,28 @@ function getQueryParam(req: Request, key: string): string | undefined {
 export function registerOAuthRoutes(app: Express) {
   
   // --- 1. LOGIN DIRECTO CON GOOGLE ---
-  app.get("/api/auth/google", async (req: Request, res: Response) => {
-    try {
-      // 🚀 CAMBIO: Usamos la URL de Railway para el callback, es más directo y seguro
-      const callbackUrl = `https://proptech-captacion-production.up.railway.app/api/auth/google/callback`;
-      const state = Buffer.from(callbackUrl).toString('base64');
-      
-      const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
-        `client_id=${ENV.googleClientId}&` +
-        `redirect_uri=${encodeURIComponent(callbackUrl)}&` +
-        `response_type=code&` +
-        `scope=openid%20profile%20email&` +
-        `state=${state}`;
-      
-      res.redirect(302, googleUrl);
-    } catch (error) {
-      res.status(500).json({ error: "Error al conectar con Google" });
-    }
-  });
+  // server/_core/oauth.ts
+
+app.get("/api/auth/google", async (req: Request, res: Response) => {
+  try {
+    const callbackUrl = `https://proptech-captacion-production.up.railway.app/api/auth/google/callback`;
+    const state = Buffer.from(callbackUrl ).toString('base64');
+    
+    // 🚀 CORRECCIÓN AQUÍ: redirect_uri debe estar limpio
+    const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?` + 
+      `client_id=${ENV.googleClientId}&` +
+      `redirect_uri=${encodeURIComponent(callbackUrl )}&` +
+      `response_type=code&` +
+      `scope=openid%20profile%20email&` +
+      `state=${state}`;
+    
+    res.redirect(302, googleUrl);
+  } catch (error) {
+    console.error("Error en /api/auth/google:", error);
+    res.status(500).json({ error: "Error al conectar con Google" });
+  }
+});
+
 
   // --- 2. CALLBACK DE GOOGLE ---
   app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
