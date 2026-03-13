@@ -2,22 +2,18 @@ import { ENV } from "./env";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
-export type MessageContent = string | { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
-
 export type Message = {
   role: Role;
-  content: MessageContent | MessageContent[];
+  content: any;
   name?: string;
-  tool_call_id?: string;
 };
 
 export type InvokeParams = {
   messages: Message[];
   maxTokens?: number;
-  outputSchema?: any;
-  output_schema?: any;     // Añadimos esto
-  responseFormat?: any;    // Añadimos esto
-  response_format?: any;   // Añadimos esto
+  max_tokens?: number;
+  response_format?: any;
+  responseFormat?: any;
 };
 
 export type InvokeResult = {
@@ -30,7 +26,7 @@ export type InvokeResult = {
   }>;
 };
 
-// LIMPIEZA DE LA URL: Google prefiere la API Key en la URL para evitar errores 404
+// Conexión directa a Google Gemini (Modo compatibilidad OpenAI)
 const resolveApiUrl = () => {
   const apiKey = ENV.forgeApiKey;
   return `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions?key=${apiKey}`;
@@ -38,20 +34,35 @@ const resolveApiUrl = () => {
 
 export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   if (!ENV.forgeApiKey) {
-    throw new Error("API Key de Gemini no configurada en Railway");
+    throw new Error("Falta la API Key en BUILT_IN_FORGE_API_KEY");
   }
 
-  const { messages } = params;
+  const { messages, response_format, responseFormat, max_tokens, maxTokens } = params;
 
-  // PAYLOAD SIMPLIFICADO: Eliminamos 'thinking' y modelos inexistentes
-  const payload = {
+  // Normalizamos los mensajes para que Google no se queje (Error 400)
+  const normalizedMessages = messages.map(msg => {
+    // Google prefiere 'system', 'user' o 'assistant'
+    let role = msg.role;
+    if (role === 'function' || role === 'tool') role = 'assistant';
+
+    return {
+      role: role,
+      content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content)
+    };
+  });
+
+  const payload: any = {
     model: "gemini-1.5-flash",
-    messages: messages.map(msg => ({
-      role: msg.role === "assistant" ? "assistant" : msg.role === "system" ? "system" : "user",
-      content: typeof msg.content === "string" ? msg.content : JSON.stringify(msg.content)
-    })),
+    messages: normalizedMessages,
     temperature: 0.7,
+    max_tokens: max_tokens || maxTokens || 4000
   };
+
+  // Si el scraper pide JSON, se lo indicamos correctamente
+  const format = response_format || responseFormat;
+  if (format) {
+    payload.response_format = format;
+  }
 
   const response = await fetch(resolveApiUrl(), {
     method: "POST",
@@ -64,11 +75,11 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const data = await response.json();
 
   if (!response.ok) {
-    console.error("DEBUG Google Error:", JSON.stringify(data));
-    throw new Error(
-      `Error de IA (${response.status}): ${data.error?.message || "Fallo desconocido"}`
-    );
+    console.error("DETALLE ERROR GOOGLE:", JSON.stringify(data));
+    // Esto nos dirá exactamente qué palabra no le gusta a Google
+    const msg = data.error?.message || "Error 400: Revisa el formato del prompt";
+    throw new Error(`Error de IA (${response.status}): ${msg}`);
   }
 
   return data as InvokeResult;
-  }
+}
