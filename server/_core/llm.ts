@@ -19,7 +19,7 @@ export type FileContent = {
   type: "file_url";
   file_url: {
     url: string;
-    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4" ;
+    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4";
   };
 };
 
@@ -50,10 +50,7 @@ export type ToolChoiceExplicit = {
   };
 };
 
-export type ToolChoice =
-  | ToolChoicePrimitive
-  | ToolChoiceByName
-  | ToolChoiceExplicit;
+export type ToolChoice = ToolChoicePrimitive | ToolChoiceByName | ToolChoiceExplicit;
 
 export type InvokeParams = {
   messages: Message[];
@@ -110,14 +107,13 @@ export type ResponseFormat =
   | { type: "json_object" }
   | { type: "json_schema"; json_schema: JsonSchema };
 
-// Función para convertir el formato de mensajes al formato de Gemini
+// Función para convertir mensajes al formato de Gemini
 const convertToGeminiMessages = (messages: Message[]) => {
   const geminiMessages: any[] = [];
   let systemPrompt = "";
 
   for (const message of messages) {
     if (message.role === "system") {
-      // Gemini maneja el system prompt de forma especial
       systemPrompt = typeof message.content === 'string' 
         ? message.content 
         : JSON.stringify(message.content);
@@ -128,17 +124,14 @@ const convertToGeminiMessages = (messages: Message[]) => {
     let content: any;
 
     if (typeof message.content === 'string') {
-      content = message.content;
+      content = [{ text: message.content }];
     } else if (Array.isArray(message.content)) {
-      // Convertir contenido multimodal
       content = message.content.map(part => {
         if (typeof part === 'string') return { text: part };
         if (part.type === 'text') return { text: part.text };
         if (part.type === 'image_url') {
-          // Extraer base64 o URL de la imagen
           const imageUrl = part.image_url.url;
           if (imageUrl.startsWith('data:image')) {
-            // Es una imagen en base64
             const matches = imageUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
             if (matches) {
               return {
@@ -149,7 +142,6 @@ const convertToGeminiMessages = (messages: Message[]) => {
               };
             }
           }
-          // Es una URL
           return {
             fileData: {
               mimeType: "image/jpeg",
@@ -168,12 +160,12 @@ const convertToGeminiMessages = (messages: Message[]) => {
         return { text: JSON.stringify(part) };
       });
     } else {
-      content = JSON.stringify(message.content);
+      content = [{ text: JSON.stringify(message.content) }];
     }
 
     geminiMessages.push({
       role,
-      parts: Array.isArray(content) ? content : [{ text: content }]
+      parts: content
     });
   }
 
@@ -193,12 +185,12 @@ const convertToGeminiTools = (tools?: Tool[]) => {
   };
 };
 
-// Función para convertir la respuesta de Gemini a nuestro formato
+// Función para convertir respuesta de Gemini a nuestro formato
 const convertFromGeminiResponse = (geminiResponse: any, model: string): InvokeResult => {
   const candidate = geminiResponse.candidates?.[0];
   const content = candidate?.content;
   
-  let messageContent: string | any[] = "";
+  let messageContent: string = "";
   let toolCalls: ToolCall[] | undefined;
 
   if (content?.parts) {
@@ -245,13 +237,15 @@ const convertFromGeminiResponse = (geminiResponse: any, model: string): InvokeRe
 };
 
 const resolveApiUrl = () => {
-  const API_KEY = ENV.forgeApiKey || "AIzaSyB75pxq-PRZoH0198IHheFlXRcfjG8Jab8";
-  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+  if (!ENV.forgeApiKey) {
+    throw new Error("forgeApiKey no está configurada en las variables de entorno");
+  }
+  return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${ENV.forgeApiKey}`;
 };
 
 const assertApiKey = () => {
-  if (!ENV.forgeApiKey && !ENV.geminiApiKey) {
-    console.warn("No API key configured, using provided key");
+  if (!ENV.forgeApiKey) {
+    throw new Error("API key de Gemini no está configurada");
   }
 };
 
@@ -265,10 +259,8 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     max_tokens,
   } = params;
 
-  // Convertir mensajes al formato de Gemini
   const { systemPrompt, geminiMessages } = convertToGeminiMessages(messages);
 
-  // Construir el payload para Gemini
   const payload: any = {
     contents: geminiMessages,
     generationConfig: {
@@ -279,50 +271,42 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     }
   };
 
-  // Añadir system prompt si existe
   if (systemPrompt) {
     payload.systemInstruction = {
       parts: [{ text: systemPrompt }]
     };
   }
 
-  // Añadir herramientas si existen
   const geminiTools = convertToGeminiTools(tools);
   if (geminiTools) {
     payload.tools = [geminiTools];
   }
 
-  const response = await fetch(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const response = await fetch(resolveApiUrl(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `Gemini API invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(
+        `Gemini API invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+    }
+
+    const geminiResponse = await response.json();
+    
+    if (geminiResponse.error) {
+      throw new Error(`Gemini API error: ${geminiResponse.error.message}`);
+    }
+
+    return convertFromGeminiResponse(geminiResponse, "gemini-2.0-flash");
+  } catch (error) {
+    console.error("Error en invokeLLM:", error);
+    throw error;
   }
-
-  const geminiResponse = await response.json();
-  
-  // Verificar si hay errores en la respuesta
-  if (geminiResponse.error) {
-    throw new Error(`Gemini API error: ${geminiResponse.error.message}`);
-  }
-
-  // Convertir la respuesta de Gemini a nuestro formato
-  return convertFromGeminiResponse(geminiResponse, "gemini-2.0-flash");
-}
-
-// También puedes agregar una función para usar el modelo de pensamiento si está disponible
-export async function invokeLLMWithThinking(params: InvokeParams): Promise<InvokeResult> {
-  // Similar a invokeLLM pero usando gemini-2.0-flash-thinking-exp si está disponible
-  const thinkingApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp:generateContent?key=${ENV.forgeApiKey || "AIzaSyAHG6PFKXLjvJ7b-rvnxgzbLkPw0WEaXOY"}`;
-  
-  // ... resto similar a invokeLLM pero con la URL diferente
-  return invokeLLM(params);
 }
