@@ -208,7 +208,7 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-// MODIFICADO: Ahora apunta por defecto a la API de Google Gemini (vía OpenAI compatibility)
+// URL REFORZADA PARA EVITAR EL ERROR 404
 const resolveApiUrl = () =>
   ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 && !ENV.forgeApiUrl.includes("googleapis.com")
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
@@ -216,7 +216,7 @@ const resolveApiUrl = () =>
 
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
-    throw new Error("API Key de Gemini no configurada en BUILT_IN_FORGE_API_KEY");
+    throw new Error("API Key de Gemini no configurada");
   }
 };
 
@@ -280,7 +280,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    // MODIFICADO: Usamos un modelo real de Google Gemini
+    // MODELO AJUSTADO
     model: "gemini-1.5-flash",
     messages: messages.map(normalizeMessage),
   };
@@ -314,7 +314,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     method: "POST",
     headers: {
       "content-type": "application/json",
-      // Aquí usará tu nueva API Key de Gemini
       authorization: `Bearer ${ENV.forgeApiKey}`,
     },
     body: JSON.stringify(payload),
@@ -322,6 +321,8 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    // Log para ver qué está pasando exactamente si falla
+    console.error("DEBUG LLM Error:", errorText);
     throw new Error(
       `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
     );
