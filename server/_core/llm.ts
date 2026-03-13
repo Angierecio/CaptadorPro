@@ -15,6 +15,9 @@ export type InvokeParams = {
   messages: Message[];
   maxTokens?: number;
   outputSchema?: any;
+  output_schema?: any;     // Añadimos esto
+  responseFormat?: any;    // Añadimos esto
+  response_format?: any;   // Añadimos esto
 };
 
 export type InvokeResult = {
@@ -69,4 +72,3 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
   return data as InvokeResult;
   }
-  
