@@ -245,7 +245,7 @@ const convertFromGeminiResponse = (geminiResponse: any, model: string): InvokeRe
 };
 
 const resolveApiUrl = () => {
-  const API_KEY = ENV.forgeApiKey || "AIzaSyAHG6PFKXLjvJ7b-rvnxgzbLkPw0WEaXOY";
+  const API_KEY = ENV.forgeApiKey || "AIzaSyB75pxq-PRZoH0198IHheFlXRcfjG8Jab8";
   return `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
 };
 
