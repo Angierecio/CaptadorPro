@@ -154,7 +154,6 @@ const normalizeMessage = (message: Message) => {
 
   const contentParts = ensureArray(message.content).map(normalizeContentPart);
 
-  // If there's only text content, collapse to a single string for compatibility
   if (contentParts.length === 1 && contentParts[0].type === "text") {
     return {
       role,
@@ -209,14 +208,15 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
+// MODIFICADO: Ahora apunta por defecto a la API de Google Gemini (vía OpenAI compatibility)
 const resolveApiUrl = () =>
-  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0
+  ENV.forgeApiUrl && ENV.forgeApiUrl.trim().length > 0 && !ENV.forgeApiUrl.includes("googleapis.com")
     ? `${ENV.forgeApiUrl.replace(/\/$/, "")}/v1/chat/completions`
-    : "https://forge.manus.im/v1/chat/completions";
+    : "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 const assertApiKey = () => {
   if (!ENV.forgeApiKey) {
-    throw new Error("OPENAI_API_KEY is not configured");
+    throw new Error("API Key de Gemini no configurada en BUILT_IN_FORGE_API_KEY");
   }
 };
 
@@ -280,7 +280,8 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   } = params;
 
   const payload: Record<string, unknown> = {
-    model: "gemini-2.5-flash",
+    // MODIFICADO: Usamos un modelo real de Google Gemini
+    model: "gemini-1.5-flash",
     messages: messages.map(normalizeMessage),
   };
 
@@ -297,9 +298,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   payload.max_tokens = 32768
-  payload.thinking = {
-    "budget_tokens": 128
-  }
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,
@@ -316,6 +314,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     method: "POST",
     headers: {
       "content-type": "application/json",
+      // Aquí usará tu nueva API Key de Gemini
       authorization: `Bearer ${ENV.forgeApiKey}`,
     },
     body: JSON.stringify(payload),
