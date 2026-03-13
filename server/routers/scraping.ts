@@ -194,14 +194,14 @@ export const scrapingRouter = router({
 
   // Jobs
   listJobs: protectedProcedure
-    .input(z.object({ sourceId: z.number().optional() }))
+    .input(z.object({ sourceId: z.coerce.number().optional() }))
     .query(async ({ input }) => {
       return getScrapingJobs(input.sourceId);
     }),
 
   // Execute scraping
   runScraping: protectedProcedure
-    .input(z.object({ sourceId: z.number() }))
+    .input(z.object({ sourceId: z.coerce.number() }))
     .mutation(async ({ input, ctx }) => {
       const source = await getScrapingSourceById(input.sourceId);
       if (!source) throw new TRPCError({ code: "NOT_FOUND", message: "Fuente no encontrada" });
